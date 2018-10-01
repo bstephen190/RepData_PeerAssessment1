@@ -1,25 +1,83 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "Brittany"
+date: "October 1, 2018"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+### Read in data
+```{r}
+activity <- read.csv("C:/Users/u57a66/Desktop/activity.csv")
+library(ggplot2)
+```
+
+### Histogram for Total Steps
+```{r total, echo=TRUE}
+ggplot(data=activity,aes(date,steps))+geom_bar(stat="identity") + ggtitle("Steps per Day")+theme(plot.title=element_text(hjust=0.5))
+```
+
+## Mean and median steps per day
+
+You can also embed plots, for example:
+
+```{r}
+avg.steps<-aggregate(steps~date,activity,mean)
+aggregate(steps~date,activity,mean)
+aggregate(steps~date,activity,median)
+```
+
+### Average Steps per Day
+```{r avg, echo=TRUE}
+plot(avg.steps,type="l",main="Average Steps per Day")
+```
+
+### Which intervals contains the maximum number of steps? 
+```{r}
+avg.interval<-aggregate(steps~interval,activity,mean)
+avg.interval$interval[which.max(avg.interval$steps)]
+```
+
+### Impute missing values by replacing them with the average for that interval
+```{r}
+activity2 <- merge(activity,avg.interval,by="interval",all.x=TRUE)
+activity2$steps.x<-ifelse(is.na(activity2$steps.x),activity2$steps.y,activity2$steps.x)
+activity2 <- activity2[,-4]
+colnames(activity2)[colnames(activity2)=="steps.x"] <- "steps"
+```
+
+### Steps per day with imputed values
+```{r}
+ggplot(activity2,aes(date,steps))+geom_bar(stat="identity") + ggtitle("Steps per Day")+theme(plot.title=element_text(hjust=0.5))
+sum(is.na(activity$steps))
+aggregate(steps~date,activity2,mean)
+aggregate(steps~date,activity2,median)
+```
+
+### Average Steps per interval on weekdays and weekends
+```{r imputed, echo=TRUE}
+library(chron)
+activity2$weekend <- chron::is.weekend(activity2$date)
+activity2$weekday <- ifelse(activity2$weekend==TRUE,"weekend","weekday") 
+activity2 <- activity2[,-4]
+avg.weekdays<-aggregate(steps~interval+weekday,activity2,mean)
+weekdays <- subset(avg.weekdays,weekday=="weekday")
+weekdays <- weekdays[,-2]
+weekends <- subset(avg.weekdays,weekday=="weekend")
+weekends <- weekends[,-2]
+library(fields)
+set.panel(m=2,n=1)
+plot(weekdays, main = "Weekday Steps",type="l")
+plot(weekends, main = "Weekend Steps",type="l")
+```
 
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
